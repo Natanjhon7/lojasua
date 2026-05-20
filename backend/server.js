@@ -14,13 +14,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-    origin: function(origin, callback) {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('CORS não permitido'));
-        }
-    },
+    origin: 'https://lojasua.vercel.app', // Sua URL do Vercel
     credentials: true
 }));
 

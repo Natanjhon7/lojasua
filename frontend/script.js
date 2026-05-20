@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://lojasua-api.onrender.com/api';
 
 // ==================== FUNÇÕES DE SESSÃO ====================
 async function verificarSessao() {
