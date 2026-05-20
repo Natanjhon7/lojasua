@@ -7,20 +7,32 @@ require('dotenv').config();
 const app = express();
 
 // ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
+// Permitir apenas as origens que você precisa
+const allowedOrigins = [
+    'https://lojasua.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5500'
+];
+
 app.use(cors({
-    origin: ['https://lojasua.vercel.app', 'http://localhost:3000', 'http://localhost:5500'],
+    origin: function(origin, callback) {
+        // Permitir requisições sem origin (como mobile apps ou curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'A política CORS não permite acesso desta origem.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
-// Lidar com preflight requests
-app.options('*', cors());
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== CONFIGURAÇÃO DE SESSÃO CORRIGIDA ====================
+// ==================== CONFIGURAÇÃO DE SESSÃO ====================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'lojasua_secret_key_2025',
     resave: false,
@@ -53,14 +65,6 @@ app.get('/api/status', (req, res) => {
         status: 'online', 
         session: req.session.userId ? 'logado' : 'deslogado',
         sessionId: req.sessionID
-    });
-});
-
-// ==================== ROTA PARA TESTAR LOGIN ====================
-app.get('/api/teste-login', (req, res) => {
-    res.json({ 
-        message: 'API está funcionando!',
-        session: req.session.userId || 'nenhum'
     });
 });
 
