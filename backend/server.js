@@ -6,20 +6,37 @@ require('dotenv').config();
 
 const app = express();
 
-// Middlewares
+// Configuração de CORS - IMPORTANTE PARA DEPLOY
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://lojasua.vercel.app',
+    'https://lojasua.onrender.com'
+];
+
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: function(origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS não permitido'));
+        }
+    },
     credentials: true
 }));
+
 app.use(express.json());
 app.use(express.static('../frontend'));
 
-// Sessões
+// Configuração de sessões - USAR no ambiente de produção
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'lojasua_secret_key',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 dia
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24,
+        sameSite: 'lax'
+    }
 }));
 
 // Importar rotas
@@ -52,14 +69,14 @@ mongoose.connect(process.env.MONGODB_URI)
         
         if (count === 0) {
             const produtosPadrao = [
-                { nome: "Smartphone Galaxy S23", preco: 2999.99, categoria: "eletronicos", imagem: "📱", descricao: "O mais novo smartphone da linha Galaxy" },
-                { nome: "Notebook Dell Inspiron", preco: 4599.99, categoria: "eletronicos", imagem: "💻", descricao: "Notebook potente para trabalho" },
-                { nome: "Camiseta Polo", preco: 79.90, categoria: "roupas", imagem: "👕", descricao: "Camiseta de algodão premium" },
-                { nome: "Calça Jeans", preco: 149.90, categoria: "roupas", imagem: "👖", descricao: "Jeans confortável e moderno" },
-                { nome: "Livro Clean Code", preco: 89.90, categoria: "livros", imagem: "📚", descricao: "Guia para código limpo" },
-                { nome: "Fone Bluetooth", preco: 199.90, categoria: "eletronicos", imagem: "🎧", descricao: "Fone sem fio alta qualidade" },
-                { nome: "Tênis Esportivo", preco: 299.90, categoria: "roupas", imagem: "👟", descricao: "Tênis leve e confortável" },
-                { nome: "Livro Design Patterns", preco: 120.00, categoria: "livros", imagem: "📖", descricao: "Padrões de projeto" }
+                { nome: "Smartphone Galaxy S23", preco: 2999.99, categoria: "eletronicos", imagem: "📱" },
+                { nome: "Notebook Dell Inspiron", preco: 4599.99, categoria: "eletronicos", imagem: "💻" },
+                { nome: "Camiseta Polo", preco: 79.90, categoria: "roupas", imagem: "👕" },
+                { nome: "Calça Jeans", preco: 149.90, categoria: "roupas", imagem: "👖" },
+                { nome: "Livro Clean Code", preco: 89.90, categoria: "livros", imagem: "📚" },
+                { nome: "Fone Bluetooth", preco: 199.90, categoria: "eletronicos", imagem: "🎧" },
+                { nome: "Tênis Esportivo", preco: 299.90, categoria: "roupas", imagem: "👟" },
+                { nome: "Livro Design Patterns", preco: 120.00, categoria: "livros", imagem: "📖" }
             ];
             await Produto.insertMany(produtosPadrao);
             console.log('✅ Produtos padrão inseridos!');
@@ -69,6 +86,7 @@ mongoose.connect(process.env.MONGODB_URI)
     })
     .catch(err => console.error('❌ Erro no MongoDB:', err.message));
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${process.env.PORT || 3000}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
