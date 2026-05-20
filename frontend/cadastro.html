@@ -50,12 +50,11 @@
             </div>
         </div>
     </div>
+    
+    <script src="script.js"></script>
     <script>
-        // 🔥 MUDE AQUI PARA SUA URL DO RENDER! 🔥
-        const API_URL = 'https://lojasua-api.onrender.com/api';
-        
-        async function cadastrarUsuario(event) {
-            event.preventDefault();
+        document.getElementById('form-cadastro').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
             const dados = {
                 nome: document.getElementById('cad-nome').value,
@@ -66,29 +65,22 @@
                 senha: document.getElementById('cad-senha').value
             };
             
-            try {
-                const response = await fetch(`${API_URL}/auth/cadastrar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(dados)
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = 'index.html';
-                } else {
-                    const msgDiv = document.getElementById('cadastro-mensagem');
-                    msgDiv.className = 'mensagem erro';
-                    msgDiv.innerText = data.message;
-                }
-            } catch (error) {
-                console.error('Erro:', error);
+            const resultado = await cadastrarUsuario(dados);
+            
+            if (resultado && resultado.success === false) {
+                const msgDiv = document.getElementById('cadastro-mensagem');
+                msgDiv.className = 'mensagem erro';
+                msgDiv.innerText = resultado.message;
             }
-        }
+        });
         
-        document.getElementById('form-cadastro').addEventListener('submit', cadastrarUsuario);
+        // Verificar se já está logado
+        (async () => {
+            const usuario = await verificarSessao();
+            if (usuario) {
+                window.location.href = 'index.html';
+            }
+        })();
     </script>
 </body>
 </html>

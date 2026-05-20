@@ -37,7 +37,6 @@
     
     <script src="script.js"></script>
     <script>
-        // Esta página usa as funções do script.js
         document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -47,9 +46,9 @@
             
             const resultado = await fazerLogin(email, senha);
             
-            if (resultado && resultado.error) {
+            if (resultado && resultado.success === false) {
                 msgDiv.className = 'mensagem erro';
-                msgDiv.innerText = resultado.error;
+                msgDiv.innerText = resultado.message;
             }
         });
         

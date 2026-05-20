@@ -7,31 +7,31 @@ require('dotenv').config();
 
 const app = express();
 
-// ==================== CONFIGURAÇÃO CORS ====================
+// ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
 app.use(cors({
     origin: ['https://lojasua.vercel.app', 'http://localhost:3000', 'http://localhost:5500'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== CONFIGURAÇÃO DE SESSÃO COM PERSISTÊNCIA NO MONGODB ====================
+// ==================== CONFIGURAÇÃO DE SESSÃO CORRIGIDA ====================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'lojasua_secret_key_2025',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
-        ttl: 24 * 60 * 60, // 24 horas
-        touchAfter: 3600 // Atualiza apenas 1x por hora
+        ttl: 24 * 60 * 60,
+        touchAfter: 3600
     }),
     cookie: {
-        secure: false,  // false para HTTP
+        secure: false,
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24, // 24 horas
+        maxAge: 1000 * 60 * 60 * 24,
         sameSite: 'lax'
     },
     name: 'lojasua_session'
@@ -65,9 +65,12 @@ mongoose.connect(process.env.MONGODB_URI)
         console.log('✅ Conectado ao MongoDB Atlas!');
         
         const Produto = require('./models/Produto');
-        const count = await Produto.countDocuments();
+        const Usuario = require('./models/Usuario');
+        const bcrypt = require('bcryptjs');
         
-        if (count === 0) {
+        // Inserir produtos padrão
+        const countProdutos = await Produto.countDocuments();
+        if (countProdutos === 0) {
             const produtosPadrao = [
                 { nome: "Smartphone Galaxy S23", preco: 2999.99, categoria: "eletronicos", imagem: "📱" },
                 { nome: "Notebook Dell Inspiron", preco: 4599.99, categoria: "eletronicos", imagem: "💻" },
@@ -82,6 +85,20 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log('✅ Produtos padrão inseridos!');
         }
         
+        // Criar admin se não existir
+        const admin = await Usuario.findOne({ email: 'admin@lojasua.com' });
+        if (!admin) {
+            const senhaHash = await bcrypt.hash('admin123', 10);
+            await Usuario.create({
+                nome: 'Administrador',
+                email: 'admin@lojasua.com',
+                cpf: '000.000.000-00',
+                senha: senhaHash,
+                isAdmin: true
+            });
+            console.log('✅ Admin criado!');
+        }
+        
         console.log('🚀 Servidor pronto!');
     })
     .catch(err => console.error('❌ Erro no MongoDB:', err.message));
@@ -89,5 +106,4 @@ mongoose.connect(process.env.MONGODB_URI)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`📍 API disponível em: ${process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`}`);
 });

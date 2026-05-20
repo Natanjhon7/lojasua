@@ -1,7 +1,7 @@
 // ==================== CONFIGURAÇÃO ====================
 const API_URL = 'https://lojasua-api.onrender.com/api';
 
-// ==================== FUNÇÕES DE SESSÃO ====================
+// ==================== FUNÇÕES DE LOGIN ====================
 async function fazerLogin(email, senha) {
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -14,16 +14,39 @@ async function fazerLogin(email, senha) {
         const data = await response.json();
         
         if (data.success) {
-            // Salvar usuário na sessionStorage para acesso rápido
             sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             window.location.href = 'index.html';
-            return true;
+            return { success: true };
         } else {
-            return { error: data.message };
+            return { success: false, message: data.message };
         }
     } catch (error) {
         console.error('Erro no login:', error);
-        return { error: 'Erro de conexão com o servidor' };
+        return { success: false, message: 'Erro de conexão com o servidor' };
+    }
+}
+
+async function cadastrarUsuario(dados) {
+    try {
+        const response = await fetch(`${API_URL}/auth/cadastrar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(dados)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+            window.location.href = 'index.html';
+            return { success: true };
+        } else {
+            return { success: false, message: data.message };
+        }
+    } catch (error) {
+        console.error('Erro no cadastro:', error);
+        return { success: false, message: 'Erro de conexão com o servidor' };
     }
 }
 
@@ -55,13 +78,7 @@ function getUsuarioLogado() {
 async function isAdmin() {
     const usuario = getUsuarioLogado();
     if (!usuario) return false;
-    
-    // Se já temos na sessionStorage, use
-    if (usuario.isAdmin !== undefined) return usuario.isAdmin;
-    
-    // Senão, busca do servidor
-    const user = await verificarSessao();
-    return user ? user.isAdmin : false;
+    return usuario.isAdmin === true;
 }
 
 async function logout() {
@@ -71,13 +88,13 @@ async function logout() {
             credentials: 'include'
         });
     } catch (error) {
-        console.error('Erro no logout:', error);
+        console.error('Erro:', error);
     }
     sessionStorage.removeItem('usuario');
     window.location.href = 'login.html';
 }
 
-function atualizarInterfaceUsuario() {
+async function atualizarInterfaceUsuario() {
     const usuario = getUsuarioLogado();
     const logado = !!usuario;
     const admin = usuario && usuario.isAdmin === true;
@@ -111,62 +128,35 @@ async function carregarPerfil() {
     
     const container = document.getElementById('perfil-info');
     if (container) {
-        // Se tiver dados completos, use; senão, busque do servidor
-        if (usuario.cpf !== undefined) {
-            container.innerHTML = `
-                <div class="perfil-info-item">
-                    <span class="perfil-info-label">Nome:</span>
-                    <span class="perfil-info-value">${usuario.nome}</span>
-                </div>
-                <div class="perfil-info-item">
-                    <span class="perfil-info-label">E-mail:</span>
-                    <span class="perfil-info-value">${usuario.email}</span>
-                </div>
-                <div class="perfil-info-item">
-                    <span class="perfil-info-label">CPF:</span>
-                    <span class="perfil-info-value">${usuario.cpf || 'Não informado'}</span>
-                </div>
-                <div class="perfil-info-item">
-                    <span class="perfil-info-label">Telefone:</span>
-                    <span class="perfil-info-value">${usuario.telefone || 'Não informado'}</span>
-                </div>
-                <div class="perfil-info-item">
-                    <span class="perfil-info-label">Endereço:</span>
-                    <span class="perfil-info-value">${usuario.endereco || 'Não informado'}</span>
-                </div>
-            `;
-        } else {
-            // Buscar dados completos do servidor
-            try {
-                const response = await fetch(`${API_URL}/auth/perfil`, { credentials: 'include' });
-                const data = await response.json();
-                if (data.success) {
-                    container.innerHTML = `
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Nome:</span>
-                            <span class="perfil-info-value">${data.usuario.nome}</span>
-                        </div>
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">E-mail:</span>
-                            <span class="perfil-info-value">${data.usuario.email}</span>
-                        </div>
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">CPF:</span>
-                            <span class="perfil-info-value">${data.usuario.cpf || 'Não informado'}</span>
-                        </div>
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Telefone:</span>
-                            <span class="perfil-info-value">${data.usuario.telefone || 'Não informado'}</span>
-                        </div>
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Endereço:</span>
-                            <span class="perfil-info-value">${data.usuario.endereco || 'Não informado'}</span>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Erro:', error);
+        try {
+            const response = await fetch(`${API_URL}/auth/perfil`, { credentials: 'include' });
+            const data = await response.json();
+            if (data.success) {
+                container.innerHTML = `
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Nome:</span>
+                        <span class="perfil-info-value">${data.usuario.nome}</span>
+                    </div>
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">E-mail:</span>
+                        <span class="perfil-info-value">${data.usuario.email}</span>
+                    </div>
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">CPF:</span>
+                        <span class="perfil-info-value">${data.usuario.cpf || 'Não informado'}</span>
+                    </div>
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Telefone:</span>
+                        <span class="perfil-info-value">${data.usuario.telefone || 'Não informado'}</span>
+                    </div>
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Endereço:</span>
+                        <span class="perfil-info-value">${data.usuario.endereco || 'Não informado'}</span>
+                    </div>
+                `;
             }
+        } catch (error) {
+            console.error('Erro:', error);
         }
     }
 }
@@ -194,7 +184,7 @@ async function carregarProdutos(categoria = 'todos') {
         }
     } catch (error) {
         console.error('Erro:', error);
-        container.innerHTML = '<p>Erro ao carregar produtos. Tente novamente.</p>';
+        container.innerHTML = '<p>Erro ao carregar produtos.</p>';
     }
 }
 
@@ -224,20 +214,13 @@ async function carregarProdutosDestaque() {
 
 function filtrarProdutos(categoria) {
     carregarProdutos(categoria);
-    // Atualizar botão ativo
-    document.querySelectorAll('.filtro-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.innerText.toLowerCase().includes(categoria) || (categoria === 'todos' && btn.innerText === 'Todos')) {
-            btn.classList.add('active');
-        }
-    });
 }
 
 // ==================== CARRINHO ====================
 async function adicionarAoCarrinho(produtoId) {
     const usuario = getUsuarioLogado();
     if (!usuario) {
-        if (confirm('Faça login para adicionar ao carrinho. Ir para o login?')) {
+        if (confirm('Faça login para adicionar ao carrinho.')) {
             window.location.href = 'login.html';
         }
         return;
@@ -255,19 +238,15 @@ async function adicionarAoCarrinho(produtoId) {
         if (data.success) {
             alert('Produto adicionado ao carrinho!');
             atualizarContadorCarrinho();
-        } else {
-            alert(data.message);
         }
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao adicionar produto');
     }
 }
 
 async function carregarCarrinho() {
     const container = document.getElementById('carrinho-itens');
     const totalSpan = document.getElementById('total-carrinho');
-    const subtotalSpan = document.getElementById('subtotal');
     
     if (!container) return;
     
@@ -306,9 +285,7 @@ async function carregarCarrinho() {
                     </div>
                 `;
             }).join('');
-            
             if (totalSpan) totalSpan.innerText = `R$ ${total.toFixed(2)}`;
-            if (subtotalSpan) subtotalSpan.innerText = `R$ ${total.toFixed(2)}`;
         } else {
             container.innerHTML = '<div class="carrinho-vazio"><p>Seu carrinho está vazio.</p><a href="produtos.html" class="btn btn-primary">Continuar Comprando</a></div>';
             if (totalSpan) totalSpan.innerText = 'R$ 0,00';
@@ -316,7 +293,6 @@ async function carregarCarrinho() {
         atualizarContadorCarrinho();
     } catch (error) {
         console.error('Erro:', error);
-        container.innerHTML = '<p>Erro ao carregar carrinho. Tente novamente.</p>';
     }
 }
 
@@ -367,7 +343,7 @@ async function limparCarrinho() {
 async function finalizarCompra() {
     const usuario = getUsuarioLogado();
     if (!usuario) {
-        if (confirm('Faça login para finalizar a compra. Ir para o login?')) {
+        if (confirm('Faça login para finalizar a compra.')) {
             window.location.href = 'login.html';
         }
         return;
@@ -380,7 +356,6 @@ async function finalizarCompra() {
         });
         
         const data = await response.json();
-        
         if (data.success) {
             alert(`✅ Compra finalizada! Total: R$ ${data.venda.total.toFixed(2)}`);
             carregarCarrinho();
@@ -390,7 +365,6 @@ async function finalizarCompra() {
         }
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao finalizar compra');
     }
 }
 
@@ -418,21 +392,10 @@ async function carregarUsuariosAdmin() {
     const container = document.getElementById('admin-usuarios');
     if (!container) return;
     
-    const usuario = getUsuarioLogado();
-    if (!usuario || !usuario.isAdmin) {
-        container.innerHTML = '<p>Acesso negado. Apenas administradores.</p>';
-        return;
-    }
-    
     try {
         const response = await fetch(`${API_URL}/admin/usuarios`, { credentials: 'include' });
-        
-        if (response.status === 403) {
-            container.innerHTML = '<p>Acesso negado. Apenas administradores.</p>';
-            return;
-        }
-        
         const data = await response.json();
+        
         if (data.success && data.usuarios.length > 0) {
             container.innerHTML = data.usuarios.map(u => `
                 <div class="usuario-item">
@@ -459,9 +422,7 @@ async function carregarProdutosAdmin() {
         
         if (data.success) {
             container.innerHTML = data.produtos.map(p => `
-                <div class="produto-item">
-                    ${p.imagem} ${p.nome} - R$ ${p.preco.toFixed(2)} (${p.categoria})
-                </div>
+                <div class="produto-item">${p.imagem} ${p.nome} - R$ ${p.preco.toFixed(2)} (${p.categoria})</div>
             `).join('');
         }
     } catch (error) {
@@ -474,8 +435,7 @@ async function adicionarProdutoExemplo() {
         nome: "Produto Novo Exemplo",
         preco: 99.99,
         categoria: "eletronicos",
-        imagem: "🆕",
-        descricao: "Produto adicionado pelo admin"
+        imagem: "🆕"
     };
     
     try {
@@ -490,8 +450,6 @@ async function adicionarProdutoExemplo() {
         if (data.success) {
             alert('Produto adicionado!');
             carregarProdutosAdmin();
-        } else {
-            alert(data.message);
         }
     } catch (error) {
         console.error('Erro:', error);
@@ -507,8 +465,7 @@ async function gerarRelatorio() {
         const data = await response.json();
         
         if (data.success && data.vendas.length > 0) {
-            let html = '<table class="relatorio-tabela">';
-            html += '<thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th></tr></thead><tbody>';
             data.vendas.forEach(venda => {
                 const itensTexto = venda.itens.map(i => `${i.nome} (${i.quantidade}x)`).join(', ');
                 html += `<tr>
@@ -531,41 +488,16 @@ async function gerarRelatorio() {
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Verificar sessão e atualizar interface
     await verificarSessao();
     atualizarInterfaceUsuario();
     atualizarContadorCarrinho();
     
-    // Produtos destaque na home
-    if (document.getElementById('produtos-destaque')) {
-        carregarProdutosDestaque();
-    }
-    
-    // Lista de produtos
-    if (document.getElementById('lista-produtos')) {
-        carregarProdutos();
-    }
-    
-    // Carrinho
-    if (document.getElementById('carrinho-itens')) {
-        carregarCarrinho();
-    }
-    
-    // Perfil
-    if (document.getElementById('perfil-info')) {
-        carregarPerfil();
-    }
-    
-    // Admin
+    if (document.getElementById('produtos-destaque')) carregarProdutosDestaque();
+    if (document.getElementById('lista-produtos')) carregarProdutos();
+    if (document.getElementById('carrinho-itens')) carregarCarrinho();
+    if (document.getElementById('perfil-info')) carregarPerfil();
     if (document.getElementById('admin-usuarios')) {
-        // Verificar se é admin antes de carregar
-        const usuario = getUsuarioLogado();
-        if (usuario && usuario.isAdmin) {
-            carregarUsuariosAdmin();
-            carregarProdutosAdmin();
-        } else {
-            document.getElementById('admin-usuarios').innerHTML = '<p>Acesso negado. Apenas administradores.</p>';
-            document.getElementById('admin-produtos').innerHTML = '<p>Acesso negado.</p>';
-        }
+        carregarUsuariosAdmin();
+        carregarProdutosAdmin();
     }
 });
