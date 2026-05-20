@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - LojaSUA</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🛍️ LojaSUA - Admin</h1>
+            </div>
+            <nav>
+                <ul id="menu-principal">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="produtos.html">Produtos</a></li>
+                    <li><a href="carrinho.html">Carrinho <span id="contador-carrinho" class="cart-badge">0</span></a></li>
+                    <li id="menu-cadastro"><a href="cadastro.html">Cadastrar</a></li>
+                    <li id="menu-perfil"><a href="perfil.html">Meu Perfil</a></li>
+                    <li id="menu-admin" style="display:none;"><a href="admin.html">Admin</a></li>
+                    <li id="menu-logout"><a href="#" onclick="logout()">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Painel Administrativo</h2>
+        
+        <div class="admin-grid">
+            <div class="admin-card">
+                <div class="admin-card-icon">📊</div>
+                <h3>Relatório de Vendas</h3>
+                <button onclick="gerarRelatorio()" class="btn btn-primary">Gerar Relatório</button>
+                <div id="relatorio-vendas" class="relatorio-content"></div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-card-icon">👥</div>
+                <h3>Usuários Cadastrados</h3>
+                <div id="admin-usuarios" class="usuarios-list"></div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-card-icon">📦</div>
+                <h3>Gerenciar Produtos</h3>
+                <button onclick="adicionarProdutoExemplo()" class="btn btn-primary">Adicionar Produto</button>
+                <div id="admin-produtos" class="produtos-list"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 LojaSUA - Área Administrativa</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        if (!isAdmin()) {
+            alert('Acesso negado! Apenas administradores podem acessar esta área.');
+            window.location.href = 'index.html';
+        }
+        
+        carregarUsuariosAdmin();
+        carregarProdutosAdmin();
+        atualizarInterfaceUsuario();
+    </script>
+</body>
+</html>

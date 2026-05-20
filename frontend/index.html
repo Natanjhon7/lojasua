@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LojaSUA - Sua loja online</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🛍️ LojaSUA</h1>
+            </div>
+            <nav>
+                <ul id="menu-principal">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="produtos.html">Produtos</a></li>
+                    <li><a href="carrinho.html">Carrinho <span id="contador-carrinho" class="cart-badge">0</span></a></li>
+                    <li id="menu-cadastro"><a href="cadastro.html">Cadastrar</a></li>
+                    <li id="menu-perfil"><a href="perfil.html">Meu Perfil</a></li>
+                    <li id="menu-admin" style="display:none;"><a href="admin.html">Admin</a></li>
+                    <li id="menu-logout"><a href="#" onclick="logout()">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2>Bem-vindo à LojaSUA</h2>
+                <p>Os melhores produtos com os melhores preços, tudo em um só lugar!</p>
+                <a href="produtos.html" class="btn btn-primary">Começar a Comprar →</a>
+            </div>
+        </section>
+
+        <section class="categorias">
+            <div class="container">
+                <h2>Categorias em Destaque</h2>
+                <div class="categorias-grid">
+                    <div class="categoria-card" onclick="filtrarCategoria('eletronicos')">
+                        <div class="categoria-icon">📱</div>
+                        <h3>Eletrônicos</h3>
+                    </div>
+                    <div class="categoria-card" onclick="filtrarCategoria('roupas')">
+                        <div class="categoria-icon">👕</div>
+                        <h3>Roupas</h3>
+                    </div>
+                    <div class="categoria-card" onclick="filtrarCategoria('livros')">
+                        <div class="categoria-icon">📚</div>
+                        <h3>Livros</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="produtos-destaque">
+            <div class="container">
+                <h2>Produtos em Destaque</h2>
+                <div class="produtos-grid" id="produtos-destaque"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 LojaSUA - Todos os direitos reservados</p>
+            <p>Sua loja de confiança na internet</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        carregarProdutosDestaque();
+    </script>
+</body>
+</html>

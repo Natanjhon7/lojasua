@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho - LojaSUA</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🛍️ LojaSUA</h1>
+            </div>
+            <nav>
+                <ul id="menu-principal">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="produtos.html">Produtos</a></li>
+                    <li><a href="carrinho.html">Carrinho <span id="contador-carrinho" class="cart-badge">0</span></a></li>
+                    <li id="menu-cadastro"><a href="cadastro.html">Cadastrar</a></li>
+                    <li id="menu-perfil"><a href="perfil.html">Meu Perfil</a></li>
+                    <li id="menu-admin" style="display:none;"><a href="admin.html">Admin</a></li>
+                    <li id="menu-logout"><a href="#" onclick="logout()">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Meu Carrinho</h2>
+        <div class="carrinho-container">
+            <div id="carrinho-itens" class="carrinho-itens"></div>
+            <div class="carrinho-resumo">
+                <div class="resumo-card">
+                    <h3>Resumo da Compra</h3>
+                    <div class="resumo-linha">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-linha">
+                        <span>Frete:</span>
+                        <span>Grátis</span>
+                    </div>
+                    <div class="resumo-linha total">
+                        <span>Total:</span>
+                        <span id="total-carrinho">R$ 0,00</span>
+                    </div>
+                    <button onclick="finalizarCompra()" class="btn btn-primary btn-full">Finalizar Compra</button>
+                    <button onclick="limparCarrinho()" class="btn btn-secundario btn-full">Limpar Carrinho</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 LojaSUA - Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        carregarCarrinho();
+        atualizarInterfaceUsuario();
+    </script>
+</body>
+</html>

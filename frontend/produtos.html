@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos - LojaSUA</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🛍️ LojaSUA</h1>
+            </div>
+            <nav>
+                <ul id="menu-principal">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="produtos.html">Produtos</a></li>
+                    <li><a href="carrinho.html">Carrinho <span id="contador-carrinho" class="cart-badge">0</span></a></li>
+                    <li id="menu-cadastro"><a href="cadastro.html">Cadastrar</a></li>
+                    <li id="menu-perfil"><a href="perfil.html">Meu Perfil</a></li>
+                    <li id="menu-admin" style="display:none;"><a href="admin.html">Admin</a></li>
+                    <li id="menu-logout"><a href="#" onclick="logout()">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Nossos Produtos</h2>
+            <div class="filtros">
+                <button class="filtro-btn active" onclick="filtrarProdutos('todos')">Todos</button>
+                <button class="filtro-btn" onclick="filtrarProdutos('eletronicos')">📱 Eletrônicos</button>
+                <button class="filtro-btn" onclick="filtrarProdutos('roupas')">👕 Roupas</button>
+                <button class="filtro-btn" onclick="filtrarProdutos('livros')">📚 Livros</button>
+            </div>
+        </div>
+        <div class="produtos-grid" id="lista-produtos"></div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 LojaSUA - Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        carregarProdutos();
+        atualizarInterfaceUsuario();
+    </script>
+</body>
+</html>

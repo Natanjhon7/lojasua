@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - LojaSUA</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>🛍️ LojaSUA</h1>
+                <h2>Crie sua conta</h2>
+            </div>
+            
+            <form id="form-cadastro" class="auth-form">
+                <div class="form-group">
+                    <label>Nome completo *</label>
+                    <input type="text" id="cad-nome" required>
+                </div>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" id="cad-cpf" placeholder="000.000.000-00">
+                </div>
+                <div class="form-group">
+                    <label>E-mail *</label>
+                    <input type="email" id="cad-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="cad-telefone">
+                </div>
+                <div class="form-group">
+                    <label>Endereço</label>
+                    <input type="text" id="cad-endereco">
+                </div>
+                <div class="form-group">
+                    <label>Senha *</label>
+                    <input type="password" id="cad-senha" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Cadastrar</button>
+            </form>
+            
+            <div id="cadastro-mensagem" class="mensagem"></div>
+            
+            <div class="auth-footer">
+                <p>Já tem uma conta? <a href="login.html">Faça login</a></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        async function cadastrarUsuario(event) {
+            event.preventDefault();
+            
+            const dados = {
+                nome: document.getElementById('cad-nome').value,
+                cpf: document.getElementById('cad-cpf').value,
+                email: document.getElementById('cad-email').value,
+                telefone: document.getElementById('cad-telefone').value,
+                endereco: document.getElementById('cad-endereco').value,
+                senha: document.getElementById('cad-senha').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/cadastrar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(dados)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = 'index.html';
+                } else {
+                    const msgDiv = document.getElementById('cadastro-mensagem');
+                    msgDiv.className = 'mensagem erro';
+                    msgDiv.innerText = data.message;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+        
+        document.getElementById('form-cadastro').addEventListener('submit', cadastrarUsuario);
+    </script>
+</body>
+</html>

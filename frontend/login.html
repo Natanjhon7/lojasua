@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LojaSUA</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>🛍️ LojaSUA</h1>
+                <h2>Entrar na sua conta</h2>
+            </div>
+            
+            <form id="form-login" class="auth-form">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="login-email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-senha" required placeholder="Digite sua senha">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+            </form>
+            
+            <div id="login-mensagem" class="mensagem"></div>
+            
+            <div class="auth-footer">
+                <p>Não tem uma conta? <a href="cadastro.html">Cadastre-se</a></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        
+        async function fazerLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, senha })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = 'index.html';
+                } else {
+                    const msgDiv = document.getElementById('login-mensagem');
+                    msgDiv.className = 'mensagem erro';
+                    msgDiv.innerText = data.message;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+        
+        document.getElementById('form-login').addEventListener('submit', fazerLogin);
+        
+        // Verificar se já está logado
+        async function verificarSessao() {
+            try {
+                const response = await fetch(`${API_URL}/auth/sessao`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (data.usuario) {
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+        verificarSessao();
+    </script>
+</body>
+</html>
