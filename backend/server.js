@@ -9,10 +9,10 @@ const app = express();
 
 // ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
 app.use(cors({
-    origin: ['https://lojasua.vercel.app', 'http://localhost:3000', 'http://localhost:5500'],
+    origin: 'https://lojasua.vercel.app',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
 }));
 
 app.use(express.json());
@@ -25,14 +25,13 @@ app.use(session({
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
-        ttl: 24 * 60 * 60,
-        touchAfter: 3600
+        ttl: 24 * 60 * 60
     }),
     cookie: {
         secure: false,
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24,
-        sameSite: 'lax'
+        sameSite: 'none'  // CRUCIAL para funcionar entre domínios diferentes!
     },
     name: 'lojasua_session'
 }));
@@ -68,7 +67,6 @@ mongoose.connect(process.env.MONGODB_URI)
         const Usuario = require('./models/Usuario');
         const bcrypt = require('bcryptjs');
         
-        // Inserir produtos padrão
         const countProdutos = await Produto.countDocuments();
         if (countProdutos === 0) {
             const produtosPadrao = [
@@ -85,7 +83,6 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log('✅ Produtos padrão inseridos!');
         }
         
-        // Criar admin se não existir
         const admin = await Usuario.findOne({ email: 'admin@lojasua.com' });
         if (!admin) {
             const senhaHash = await bcrypt.hash('admin123', 10);
