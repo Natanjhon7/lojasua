@@ -4,7 +4,6 @@ const Venda = require('../models/Venda');
 const Usuario = require('../models/Usuario');
 const Produto = require('../models/Produto');
 
-// Middleware para verificar se é admin
 async function isAdmin(req, res, next) {
     if (!req.session.userId) {
         return res.status(401).json({ success: false, message: 'Não autorizado' });
@@ -12,25 +11,22 @@ async function isAdmin(req, res, next) {
     
     const usuario = await Usuario.findById(req.session.userId);
     if (!usuario || !usuario.isAdmin) {
-        return res.status(403).json({ success: false, message: 'Acesso negado. Apenas administradores.' });
+        return res.status(403).json({ success: false, message: 'Acesso negado' });
     }
     
     next();
 }
 
-// GET - Relatório de vendas
 router.get('/relatorio-vendas', isAdmin, async (req, res) => {
     try {
         const vendas = await Venda.find().sort({ dataVenda: -1 });
         const totalGeral = vendas.reduce((sum, v) => sum + v.total, 0);
-        
         res.json({ success: true, vendas, totalGeral });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// GET - Listar usuários
 router.get('/usuarios', isAdmin, async (req, res) => {
     try {
         const usuarios = await Usuario.find().select('-senha');
@@ -40,7 +36,6 @@ router.get('/usuarios', isAdmin, async (req, res) => {
     }
 });
 
-// GET - Listar produtos
 router.get('/produtos', isAdmin, async (req, res) => {
     try {
         const produtos = await Produto.find();
@@ -50,31 +45,12 @@ router.get('/produtos', isAdmin, async (req, res) => {
     }
 });
 
-// POST - Adicionar produto
 router.post('/produtos', isAdmin, async (req, res) => {
     try {
-        const { nome, preco, categoria, imagem, descricao } = req.body;
-        
-        const novoProduto = new Produto({
-            nome,
-            preco,
-            categoria,
-            imagem: imagem || '📦',
-            descricao: descricao || ''
-        });
-        
+        const { nome, preco, categoria, imagem } = req.body;
+        const novoProduto = new Produto({ nome, preco, categoria, imagem: imagem || '📦' });
         await novoProduto.save();
-        res.json({ success: true, message: 'Produto adicionado!', produto: novoProduto });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// DELETE - Remover produto
-router.delete('/produtos/:id', isAdmin, async (req, res) => {
-    try {
-        await Produto.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: 'Produto removido!' });
+        res.json({ success: true, message: 'Produto adicionado!' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

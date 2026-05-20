@@ -3,15 +3,13 @@ const router = express.Router();
 const Carrinho = require('../models/Carrinho');
 const Produto = require('../models/Produto');
 
-// Middleware para verificar se usuário está logado
 async function estaLogado(req, res, next) {
     if (!req.session.userId) {
-        return res.status(401).json({ success: false, message: 'Não autorizado. Faça login.' });
+        return res.status(401).json({ success: false, message: 'Faça login' });
     }
     next();
 }
 
-// Obter carrinho do usuário
 async function getCarrinho(usuarioId) {
     let carrinho = await Carrinho.findOne({ usuarioId });
     if (!carrinho) {
@@ -21,13 +19,11 @@ async function getCarrinho(usuarioId) {
     return carrinho;
 }
 
-// GET - Obter carrinho
 router.get('/', estaLogado, async (req, res) => {
     try {
         const carrinho = await getCarrinho(req.session.userId);
-        
-        // Popular com dados dos produtos
         const itensCompletos = [];
+        
         for (const item of carrinho.itens) {
             const produto = await Produto.findById(item.produtoId);
             if (produto) {
@@ -47,15 +43,12 @@ router.get('/', estaLogado, async (req, res) => {
     }
 });
 
-// POST - Adicionar item
 router.post('/adicionar', estaLogado, async (req, res) => {
     try {
         const { produtoId, quantidade } = req.body;
         const carrinho = await getCarrinho(req.session.userId);
         
-        const itemExistente = carrinho.itens.find(
-            item => item.produtoId.toString() === produtoId
-        );
+        const itemExistente = carrinho.itens.find(i => i.produtoId.toString() === produtoId);
         
         if (itemExistente) {
             itemExistente.quantidade += quantidade || 1;
@@ -63,24 +56,20 @@ router.post('/adicionar', estaLogado, async (req, res) => {
             carrinho.itens.push({ produtoId, quantidade: quantidade || 1 });
         }
         
-        carrinho.atualizadoEm = Date.now();
         await carrinho.save();
-        
-        res.json({ success: true, message: 'Produto adicionado ao carrinho!' });
+        res.json({ success: true, message: 'Produto adicionado!' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// PUT - Atualizar quantidade
 router.put('/atualizar/:produtoId', estaLogado, async (req, res) => {
     try {
         const { produtoId } = req.params;
         const { quantidade } = req.body;
-        
         const carrinho = await getCarrinho(req.session.userId);
-        const item = carrinho.itens.find(i => i.produtoId.toString() === produtoId);
         
+        const item = carrinho.itens.find(i => i.produtoId.toString() === produtoId);
         if (item) {
             if (quantidade <= 0) {
                 carrinho.itens = carrinho.itens.filter(i => i.produtoId.toString() !== produtoId);
@@ -90,13 +79,12 @@ router.put('/atualizar/:produtoId', estaLogado, async (req, res) => {
             await carrinho.save();
         }
         
-        res.json({ success: true, message: 'Carrinho atualizado!' });
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// DELETE - Remover item
 router.delete('/remover/:produtoId', estaLogado, async (req, res) => {
     try {
         const { produtoId } = req.params;
@@ -105,17 +93,16 @@ router.delete('/remover/:produtoId', estaLogado, async (req, res) => {
         carrinho.itens = carrinho.itens.filter(i => i.produtoId.toString() !== produtoId);
         await carrinho.save();
         
-        res.json({ success: true, message: 'Item removido!' });
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// DELETE - Limpar carrinho
 router.delete('/limpar', estaLogado, async (req, res) => {
     try {
         await Carrinho.findOneAndDelete({ usuarioId: req.session.userId });
-        res.json({ success: true, message: 'Carrinho limpo!' });
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

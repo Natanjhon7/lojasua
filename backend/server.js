@@ -3,24 +3,27 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
+// ==================== CONFIGURAÇÃO ====================
 app.use(cors({
-    origin: 'https://lojasua.vercel.app',
+    origin: process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== CONFIGURAÇÃO DE SESSÃO CORRIGIDA ====================
+// Servir arquivos estáticos do frontend
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// ==================== SESSÃO ====================
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'lojasua_secret_key_2025',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -31,7 +34,7 @@ app.use(session({
         secure: false,
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24,
-        sameSite: 'none'  // CRUCIAL para funcionar entre domínios diferentes!
+        sameSite: 'lax'
     },
     name: 'lojasua_session'
 }));
@@ -53,8 +56,17 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/status', (req, res) => {
     res.json({ 
         status: 'online', 
-        session: req.session.userId ? 'logado' : 'deslogado',
-        sessionId: req.sessionID
+        session: req.session.userId ? 'logado' : 'deslogado'
+    });
+});
+
+// ==================== FRONTEND - TODAS AS OUTRAS ROTAS ====================
+app.get('*', (req, res) => {
+    const filePath = path.join(__dirname, '../frontend', req.path === '/' ? 'index.html' : req.path);
+    res.sendFile(filePath, err => {
+        if (err) {
+            res.sendFile(path.join(__dirname, '../frontend/index.html'));
+        }
     });
 });
 
@@ -67,6 +79,7 @@ mongoose.connect(process.env.MONGODB_URI)
         const Usuario = require('./models/Usuario');
         const bcrypt = require('bcryptjs');
         
+        // Inserir produtos padrão
         const countProdutos = await Produto.countDocuments();
         if (countProdutos === 0) {
             const produtosPadrao = [
@@ -83,6 +96,7 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log('✅ Produtos padrão inseridos!');
         }
         
+        // Criar admin se não existir
         const admin = await Usuario.findOne({ email: 'admin@lojasua.com' });
         if (!admin) {
             const senhaHash = await bcrypt.hash('admin123', 10);
@@ -103,4 +117,5 @@ mongoose.connect(process.env.MONGODB_URI)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    console.log(`📍 Acesse: https://lojasua-api.onrender.com`);
 });

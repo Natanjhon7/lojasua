@@ -52,11 +52,10 @@
             }
         });
         
-        // Verificar se já está logado
         (async () => {
             const usuario = await verificarSessao();
             if (usuario) {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }
         })();
     </script>

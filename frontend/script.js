@@ -1,5 +1,6 @@
 // ==================== CONFIGURAÇÃO ====================
-const API_URL = 'https://lojasua-api.onrender.com/api';
+// Agora frontend e backend estão no MESMO domínio!
+const API_URL = '/api';
 
 // ==================== FUNÇÕES DE LOGIN ====================
 async function fazerLogin(email, senha) {
@@ -8,14 +9,13 @@ async function fazerLogin(email, senha) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            mode: 'cors',
             body: JSON.stringify({ email, senha })
         });
         
         const data = await response.json();
         
         if (data.success) {
-            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             window.location.href = '/';
             return { success: true };
         } else {
@@ -33,14 +33,13 @@ async function cadastrarUsuario(dados) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            mode: 'cors',
             body: JSON.stringify(dados)
         });
         
         const data = await response.json();
         
         if (data.success) {
-            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             window.location.href = '/';
             return { success: true };
         } else {
@@ -55,16 +54,15 @@ async function cadastrarUsuario(dados) {
 async function verificarSessao() {
     try {
         const response = await fetch(`${API_URL}/auth/sessao`, {
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         });
         const data = await response.json();
         
         if (data.usuario) {
-            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             return data.usuario;
         } else {
-            localStorage.removeItem('usuario');
+            sessionStorage.removeItem('usuario');
             return null;
         }
     } catch (error) {
@@ -74,7 +72,7 @@ async function verificarSessao() {
 }
 
 function getUsuarioLogado() {
-    const usuario = localStorage.getItem('usuario');
+    const usuario = sessionStorage.getItem('usuario');
     return usuario ? JSON.parse(usuario) : null;
 }
 
@@ -88,18 +86,16 @@ async function logout() {
     try {
         await fetch(`${API_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         });
     } catch (error) {
         console.error('Erro:', error);
     }
-    localStorage.removeItem('usuario');
+    sessionStorage.removeItem('usuario');
     window.location.href = '/login.html';
 }
 
 async function atualizarInterfaceUsuario() {
-    await verificarSessao();
     const usuario = getUsuarioLogado();
     const logado = !!usuario;
     const admin = usuario && usuario.isAdmin === true;
@@ -134,10 +130,7 @@ async function carregarPerfil() {
     const container = document.getElementById('perfil-info');
     if (container) {
         try {
-            const response = await fetch(`${API_URL}/auth/perfil`, { 
-                credentials: 'include',
-                mode: 'cors'
-            });
+            const response = await fetch(`${API_URL}/auth/perfil`, { credentials: 'include' });
             const data = await response.json();
             if (data.success) {
                 container.innerHTML = `
@@ -239,7 +232,6 @@ async function adicionarAoCarrinho(produtoId) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            mode: 'cors',
             body: JSON.stringify({ produtoId, quantidade: 1 })
         });
         
@@ -266,10 +258,7 @@ async function carregarCarrinho() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/carrinho`, { 
-            credentials: 'include',
-            mode: 'cors'
-        });
+        const response = await fetch(`${API_URL}/carrinho`, { credentials: 'include' });
         
         if (response.status === 401) {
             container.innerHTML = '<div class="carrinho-vazio"><p>Sessão expirada. Faça login novamente.</p><a href="login.html" class="btn btn-primary">Fazer Login</a></div>';
@@ -319,7 +308,6 @@ async function alterarQuantidade(produtoId, novaQuantidade) {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            mode: 'cors',
             body: JSON.stringify({ quantidade: novaQuantidade })
         });
         carregarCarrinho();
@@ -332,8 +320,7 @@ async function removerDoCarrinho(produtoId) {
     try {
         await fetch(`${API_URL}/carrinho/remover/${produtoId}`, {
             method: 'DELETE',
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         });
         carregarCarrinho();
     } catch (error) {
@@ -345,8 +332,7 @@ async function limparCarrinho() {
     try {
         await fetch(`${API_URL}/carrinho/limpar`, {
             method: 'DELETE',
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         });
         carregarCarrinho();
         alert('Carrinho limpo!');
@@ -367,8 +353,7 @@ async function finalizarCompra() {
     try {
         const response = await fetch(`${API_URL}/vendas/finalizar`, {
             method: 'POST',
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         });
         
         const data = await response.json();
@@ -389,10 +374,7 @@ async function atualizarContadorCarrinho() {
     if (!usuario) return;
     
     try {
-        const response = await fetch(`${API_URL}/carrinho`, { 
-            credentials: 'include',
-            mode: 'cors'
-        });
+        const response = await fetch(`${API_URL}/carrinho`, { credentials: 'include' });
         if (response.status === 401) return;
         
         const data = await response.json();
@@ -412,10 +394,7 @@ async function carregarUsuariosAdmin() {
     if (!container) return;
     
     try {
-        const response = await fetch(`${API_URL}/admin/usuarios`, { 
-            credentials: 'include',
-            mode: 'cors'
-        });
+        const response = await fetch(`${API_URL}/admin/usuarios`, { credentials: 'include' });
         const data = await response.json();
         
         if (data.success && data.usuarios.length > 0) {
@@ -439,10 +418,7 @@ async function carregarProdutosAdmin() {
     if (!container) return;
     
     try {
-        const response = await fetch(`${API_URL}/admin/produtos`, { 
-            credentials: 'include',
-            mode: 'cors'
-        });
+        const response = await fetch(`${API_URL}/admin/produtos`, { credentials: 'include' });
         const data = await response.json();
         
         if (data.success) {
@@ -468,7 +444,6 @@ async function adicionarProdutoExemplo() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            mode: 'cors',
             body: JSON.stringify(novoProduto)
         });
         
@@ -476,6 +451,7 @@ async function adicionarProdutoExemplo() {
         if (data.success) {
             alert('Produto adicionado!');
             carregarProdutosAdmin();
+            carregarProdutos();
         }
     } catch (error) {
         console.error('Erro:', error);
@@ -487,10 +463,7 @@ async function gerarRelatorio() {
     if (!container) return;
     
     try {
-        const response = await fetch(`${API_URL}/admin/relatorio-vendas`, { 
-            credentials: 'include',
-            mode: 'cors'
-        });
+        const response = await fetch(`${API_URL}/admin/relatorio-vendas`, { credentials: 'include' });
         const data = await response.json();
         
         if (data.success && data.vendas.length > 0) {
@@ -517,8 +490,9 @@ async function gerarRelatorio() {
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    await atualizarInterfaceUsuario();
-    await atualizarContadorCarrinho();
+    await verificarSessao();
+    atualizarInterfaceUsuario();
+    atualizarContadorCarrinho();
     
     if (document.getElementById('produtos-destaque')) carregarProdutosDestaque();
     if (document.getElementById('lista-produtos')) carregarProdutos();
