@@ -34,55 +34,32 @@
             </div>
         </div>
     </div>
+    
+    <script src="script.js"></script>
     <script>
-        // 🔥 MUDE AQUI PARA SUA URL DO RENDER! 🔥
-        const API_URL = 'https://lojasua-api.onrender.com/api';
-        
-        async function fazerLogin(event) {
-            event.preventDefault();
+        // Esta página usa as funções do script.js
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
             const email = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
+            const msgDiv = document.getElementById('login-mensagem');
             
-            try {
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ email, senha })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = 'index.html';
-                } else {
-                    const msgDiv = document.getElementById('login-mensagem');
-                    msgDiv.className = 'mensagem erro';
-                    msgDiv.innerText = data.message;
-                }
-            } catch (error) {
-                console.error('Erro:', error);
+            const resultado = await fazerLogin(email, senha);
+            
+            if (resultado && resultado.error) {
+                msgDiv.className = 'mensagem erro';
+                msgDiv.innerText = resultado.error;
             }
-        }
-        
-        document.getElementById('form-login').addEventListener('submit', fazerLogin);
+        });
         
         // Verificar se já está logado
-        async function verificarSessao() {
-            try {
-                const response = await fetch(`${API_URL}/auth/sessao`, {
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                if (data.usuario) {
-                    window.location.href = 'index.html';
-                }
-            } catch (error) {
-                console.error('Erro:', error);
+        (async () => {
+            const usuario = await verificarSessao();
+            if (usuario) {
+                window.location.href = 'index.html';
             }
-        }
-        verificarSessao();
+        })();
     </script>
 </body>
 </html>

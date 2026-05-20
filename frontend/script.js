@@ -1,44 +1,86 @@
 // ==================== CONFIGURAÇÃO ====================
-// 🔥 MUDE AQUI PARA SUA URL DO RENDER! 🔥
 const API_URL = 'https://lojasua-api.onrender.com/api';
 
 // ==================== FUNÇÕES DE SESSÃO ====================
+async function fazerLogin(email, senha) {
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email, senha })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Salvar usuário na sessionStorage para acesso rápido
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+            window.location.href = 'index.html';
+            return true;
+        } else {
+            return { error: data.message };
+        }
+    } catch (error) {
+        console.error('Erro no login:', error);
+        return { error: 'Erro de conexão com o servidor' };
+    }
+}
+
 async function verificarSessao() {
     try {
         const response = await fetch(`${API_URL}/auth/sessao`, {
             credentials: 'include'
         });
         const data = await response.json();
-        return data.usuario;
+        
+        if (data.usuario) {
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+            return data.usuario;
+        } else {
+            sessionStorage.removeItem('usuario');
+            return null;
+        }
     } catch (error) {
         console.error('Erro:', error);
         return null;
     }
 }
 
-async function getUsuarioLogado() {
-    const response = await fetch(`${API_URL}/auth/sessao`, { credentials: 'include' });
-    const data = await response.json();
-    return data.usuario;
+function getUsuarioLogado() {
+    const usuario = sessionStorage.getItem('usuario');
+    return usuario ? JSON.parse(usuario) : null;
 }
 
 async function isAdmin() {
-    const usuario = await getUsuarioLogado();
-    return usuario && usuario.isAdmin === true;
+    const usuario = getUsuarioLogado();
+    if (!usuario) return false;
+    
+    // Se já temos na sessionStorage, use
+    if (usuario.isAdmin !== undefined) return usuario.isAdmin;
+    
+    // Senão, busca do servidor
+    const user = await verificarSessao();
+    return user ? user.isAdmin : false;
 }
 
 async function logout() {
-    await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-    });
+    try {
+        await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.error('Erro no logout:', error);
+    }
+    sessionStorage.removeItem('usuario');
     window.location.href = 'login.html';
 }
 
-async function atualizarInterfaceUsuario() {
-    const usuario = await getUsuarioLogado();
+function atualizarInterfaceUsuario() {
+    const usuario = getUsuarioLogado();
     const logado = !!usuario;
-    const admin = usuario && usuario.isAdmin;
+    const admin = usuario && usuario.isAdmin === true;
     
     const menuCadastro = document.getElementById('menu-cadastro');
     const menuPerfil = document.getElementById('menu-perfil');
@@ -49,7 +91,9 @@ async function atualizarInterfaceUsuario() {
         if (menuCadastro) menuCadastro.style.display = 'none';
         if (menuPerfil) menuPerfil.style.display = 'block';
         if (menuLogout) menuLogout.style.display = 'block';
-        if (menuAdmin && admin) menuAdmin.style.display = 'block';
+        if (menuAdmin) {
+            menuAdmin.style.display = admin ? 'block' : 'none';
+        }
     } else {
         if (menuCadastro) menuCadastro.style.display = 'block';
         if (menuPerfil) menuPerfil.style.display = 'none';
@@ -59,7 +103,7 @@ async function atualizarInterfaceUsuario() {
 }
 
 async function carregarPerfil() {
-    const usuario = await getUsuarioLogado();
+    const usuario = getUsuarioLogado();
     if (!usuario) {
         window.location.href = 'login.html';
         return;
@@ -67,28 +111,63 @@ async function carregarPerfil() {
     
     const container = document.getElementById('perfil-info');
     if (container) {
-        container.innerHTML = `
-            <div class="perfil-info-item">
-                <span class="perfil-info-label">Nome:</span>
-                <span class="perfil-info-value">${usuario.nome}</span>
-            </div>
-            <div class="perfil-info-item">
-                <span class="perfil-info-label">E-mail:</span>
-                <span class="perfil-info-value">${usuario.email}</span>
-            </div>
-            <div class="perfil-info-item">
-                <span class="perfil-info-label">CPF:</span>
-                <span class="perfil-info-value">${usuario.cpf || 'Não informado'}</span>
-            </div>
-            <div class="perfil-info-item">
-                <span class="perfil-info-label">Telefone:</span>
-                <span class="perfil-info-value">${usuario.telefone || 'Não informado'}</span>
-            </div>
-            <div class="perfil-info-item">
-                <span class="perfil-info-label">Endereço:</span>
-                <span class="perfil-info-value">${usuario.endereco || 'Não informado'}</span>
-            </div>
-        `;
+        // Se tiver dados completos, use; senão, busque do servidor
+        if (usuario.cpf !== undefined) {
+            container.innerHTML = `
+                <div class="perfil-info-item">
+                    <span class="perfil-info-label">Nome:</span>
+                    <span class="perfil-info-value">${usuario.nome}</span>
+                </div>
+                <div class="perfil-info-item">
+                    <span class="perfil-info-label">E-mail:</span>
+                    <span class="perfil-info-value">${usuario.email}</span>
+                </div>
+                <div class="perfil-info-item">
+                    <span class="perfil-info-label">CPF:</span>
+                    <span class="perfil-info-value">${usuario.cpf || 'Não informado'}</span>
+                </div>
+                <div class="perfil-info-item">
+                    <span class="perfil-info-label">Telefone:</span>
+                    <span class="perfil-info-value">${usuario.telefone || 'Não informado'}</span>
+                </div>
+                <div class="perfil-info-item">
+                    <span class="perfil-info-label">Endereço:</span>
+                    <span class="perfil-info-value">${usuario.endereco || 'Não informado'}</span>
+                </div>
+            `;
+        } else {
+            // Buscar dados completos do servidor
+            try {
+                const response = await fetch(`${API_URL}/auth/perfil`, { credentials: 'include' });
+                const data = await response.json();
+                if (data.success) {
+                    container.innerHTML = `
+                        <div class="perfil-info-item">
+                            <span class="perfil-info-label">Nome:</span>
+                            <span class="perfil-info-value">${data.usuario.nome}</span>
+                        </div>
+                        <div class="perfil-info-item">
+                            <span class="perfil-info-label">E-mail:</span>
+                            <span class="perfil-info-value">${data.usuario.email}</span>
+                        </div>
+                        <div class="perfil-info-item">
+                            <span class="perfil-info-label">CPF:</span>
+                            <span class="perfil-info-value">${data.usuario.cpf || 'Não informado'}</span>
+                        </div>
+                        <div class="perfil-info-item">
+                            <span class="perfil-info-label">Telefone:</span>
+                            <span class="perfil-info-value">${data.usuario.telefone || 'Não informado'}</span>
+                        </div>
+                        <div class="perfil-info-item">
+                            <span class="perfil-info-label">Endereço:</span>
+                            <span class="perfil-info-value">${data.usuario.endereco || 'Não informado'}</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
     }
 }
 
@@ -115,6 +194,7 @@ async function carregarProdutos(categoria = 'todos') {
         }
     } catch (error) {
         console.error('Erro:', error);
+        container.innerHTML = '<p>Erro ao carregar produtos. Tente novamente.</p>';
     }
 }
 
@@ -144,10 +224,25 @@ async function carregarProdutosDestaque() {
 
 function filtrarProdutos(categoria) {
     carregarProdutos(categoria);
+    // Atualizar botão ativo
+    document.querySelectorAll('.filtro-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText.toLowerCase().includes(categoria) || (categoria === 'todos' && btn.innerText === 'Todos')) {
+            btn.classList.add('active');
+        }
+    });
 }
 
 // ==================== CARRINHO ====================
 async function adicionarAoCarrinho(produtoId) {
+    const usuario = getUsuarioLogado();
+    if (!usuario) {
+        if (confirm('Faça login para adicionar ao carrinho. Ir para o login?')) {
+            window.location.href = 'login.html';
+        }
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/carrinho/adicionar`, {
             method: 'POST',
@@ -160,13 +255,12 @@ async function adicionarAoCarrinho(produtoId) {
         if (data.success) {
             alert('Produto adicionado ao carrinho!');
             atualizarContadorCarrinho();
-        } else if (response.status === 401) {
-            if (confirm('Faça login para adicionar ao carrinho. Ir para o login?')) {
-                window.location.href = 'login.html';
-            }
+        } else {
+            alert(data.message);
         }
     } catch (error) {
         console.error('Erro:', error);
+        alert('Erro ao adicionar produto');
     }
 }
 
@@ -177,11 +271,17 @@ async function carregarCarrinho() {
     
     if (!container) return;
     
+    const usuario = getUsuarioLogado();
+    if (!usuario) {
+        container.innerHTML = '<div class="carrinho-vazio"><p>Faça login para ver seu carrinho.</p><a href="login.html" class="btn btn-primary">Fazer Login</a></div>';
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/carrinho`, { credentials: 'include' });
         
         if (response.status === 401) {
-            container.innerHTML = '<div class="carrinho-vazio"><p>Faça login para ver seu carrinho.</p><a href="login.html" class="btn btn-primary">Fazer Login</a></div>';
+            container.innerHTML = '<div class="carrinho-vazio"><p>Sessão expirada. Faça login novamente.</p><a href="login.html" class="btn btn-primary">Fazer Login</a></div>';
             return;
         }
         
@@ -216,6 +316,7 @@ async function carregarCarrinho() {
         atualizarContadorCarrinho();
     } catch (error) {
         console.error('Erro:', error);
+        container.innerHTML = '<p>Erro ao carregar carrinho. Tente novamente.</p>';
     }
 }
 
@@ -264,6 +365,14 @@ async function limparCarrinho() {
 }
 
 async function finalizarCompra() {
+    const usuario = getUsuarioLogado();
+    if (!usuario) {
+        if (confirm('Faça login para finalizar a compra. Ir para o login?')) {
+            window.location.href = 'login.html';
+        }
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/vendas/finalizar`, {
             method: 'POST',
@@ -276,19 +385,19 @@ async function finalizarCompra() {
             alert(`✅ Compra finalizada! Total: R$ ${data.venda.total.toFixed(2)}`);
             carregarCarrinho();
             atualizarContadorCarrinho();
-        } else if (response.status === 401) {
-            if (confirm('Faça login para finalizar a compra. Ir para o login?')) {
-                window.location.href = 'login.html';
-            }
         } else {
             alert(data.message);
         }
     } catch (error) {
         console.error('Erro:', error);
+        alert('Erro ao finalizar compra');
     }
 }
 
 async function atualizarContadorCarrinho() {
+    const usuario = getUsuarioLogado();
+    if (!usuario) return;
+    
     try {
         const response = await fetch(`${API_URL}/carrinho`, { credentials: 'include' });
         if (response.status === 401) return;
@@ -308,6 +417,12 @@ async function atualizarContadorCarrinho() {
 async function carregarUsuariosAdmin() {
     const container = document.getElementById('admin-usuarios');
     if (!container) return;
+    
+    const usuario = getUsuarioLogado();
+    if (!usuario || !usuario.isAdmin) {
+        container.innerHTML = '<p>Acesso negado. Apenas administradores.</p>';
+        return;
+    }
     
     try {
         const response = await fetch(`${API_URL}/admin/usuarios`, { credentials: 'include' });
@@ -375,6 +490,8 @@ async function adicionarProdutoExemplo() {
         if (data.success) {
             alert('Produto adicionado!');
             carregarProdutosAdmin();
+        } else {
+            alert(data.message);
         }
     } catch (error) {
         console.error('Erro:', error);
@@ -390,7 +507,8 @@ async function gerarRelatorio() {
         const data = await response.json();
         
         if (data.success && data.vendas.length > 0) {
-            let html = '<table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th></tr></thead><tbody>';
+            let html = '<table class="relatorio-tabela">';
+            html += '<thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th></tr></thead><tbody>';
             data.vendas.forEach(venda => {
                 const itensTexto = venda.itens.map(i => `${i.nome} (${i.quantidade}x)`).join(', ');
                 html += `<tr>
@@ -400,7 +518,7 @@ async function gerarRelatorio() {
                     <td>R$ ${venda.total.toFixed(2)}</td>
                 </tr>`;
             });
-            html += `<tr class="total"><td colspan="3"><strong>TOTAL</strong></td><td><strong>R$ ${data.totalGeral.toFixed(2)}</strong></td></tr>`;
+            html += `<tr class="total-row"><td colspan="3"><strong>TOTAL GERAL</strong></td><td><strong>R$ ${data.totalGeral.toFixed(2)}</strong></td></tr>`;
             html += '</tbody></table>';
             container.innerHTML = html;
         } else {
@@ -413,6 +531,11 @@ async function gerarRelatorio() {
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
+    // Verificar sessão e atualizar interface
+    await verificarSessao();
+    atualizarInterfaceUsuario();
+    atualizarContadorCarrinho();
+    
     // Produtos destaque na home
     if (document.getElementById('produtos-destaque')) {
         carregarProdutosDestaque();
@@ -435,10 +558,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Admin
     if (document.getElementById('admin-usuarios')) {
-        carregarUsuariosAdmin();
-        carregarProdutosAdmin();
+        // Verificar se é admin antes de carregar
+        const usuario = getUsuarioLogado();
+        if (usuario && usuario.isAdmin) {
+            carregarUsuariosAdmin();
+            carregarProdutosAdmin();
+        } else {
+            document.getElementById('admin-usuarios').innerHTML = '<p>Acesso negado. Apenas administradores.</p>';
+            document.getElementById('admin-produtos').innerHTML = '<p>Acesso negado.</p>';
+        }
     }
-    
-    atualizarContadorCarrinho();
-    atualizarInterfaceUsuario();
 });

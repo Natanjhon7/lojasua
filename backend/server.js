@@ -6,58 +6,69 @@ require('dotenv').config();
 
 const app = express();
 
-// Configuração de CORS - IMPORTANTE PARA DEPLOY
-const allowedOrigins = [
-    'http://localhost:3000',
-    'https://lojasua.vercel.app',
-    'https://lojasua.onrender.com'
-];
-
+// ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
 app.use(cors({
-    origin: 'https://lojasua.vercel.app', // Sua URL do Vercel
-    credentials: true
+    origin: ['https://lojasua.vercel.app', 'http://localhost:3000', 'http://localhost:5500'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
+
+// Lidar com preflight requests
+app.options('*', cors());
 
 app.use(express.json());
-app.use(express.static('../frontend'));
+app.use(express.urlencoded({ extended: true }));
 
-// Configuração de sessões - USAR no ambiente de produção
+// ==================== CONFIGURAÇÃO DE SESSÃO CORRIGIDA ====================
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'lojasua_secret_key',
+    secret: process.env.SESSION_SECRET || 'lojasua_secret_key_2025',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 24,
+    cookie: {
+        secure: false,  // IMPORTANTE: false para HTTP (Render usa HTTP internamente)
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24, // 24 horas
         sameSite: 'lax'
-    }
+    },
+    name: 'lojasua_session'
 }));
 
-// Importar rotas
+// ==================== ROTAS ====================
 const authRoutes = require('./routes/auth');
 const produtosRoutes = require('./routes/produtos');
 const carrinhoRoutes = require('./routes/carrinho');
 const vendasRoutes = require('./routes/vendas');
 const adminRoutes = require('./routes/admin');
 
-// Usar rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/produtos', produtosRoutes);
 app.use('/api/carrinho', carrinhoRoutes);
 app.use('/api/vendas', vendasRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Rota de teste
+// ==================== ROTA DE TESTE ====================
 app.get('/api/status', (req, res) => {
-    res.json({ status: 'online', session: req.session.userId || 'nenhum' });
+    res.json({ 
+        status: 'online', 
+        session: req.session.userId ? 'logado' : 'deslogado',
+        sessionId: req.sessionID
+    });
 });
 
-// Conectar ao MongoDB
+// ==================== ROTA PARA TESTAR LOGIN ====================
+app.get('/api/teste-login', (req, res) => {
+    res.json({ 
+        message: 'API está funcionando!',
+        session: req.session.userId || 'nenhum'
+    });
+});
+
+// ==================== CONEXÃO MONGODB ====================
 mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
         console.log('✅ Conectado ao MongoDB Atlas!');
         
-        // Inserir produtos padrão se não existirem
         const Produto = require('./models/Produto');
         const count = await Produto.countDocuments();
         
@@ -83,4 +94,5 @@ mongoose.connect(process.env.MONGODB_URI)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    console.log(`📍 API disponível em: https://lojasua-api.onrender.com`);
 });

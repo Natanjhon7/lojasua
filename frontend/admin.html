@@ -47,7 +47,7 @@
             <div class="admin-card">
                 <div class="admin-card-icon">📦</div>
                 <h3>Gerenciar Produtos</h3>
-                <button onclick="adicionarProdutoExemplo()" class="btn btn-primary">Adicionar Produto</button>
+                <button onclick="adicionarProdutoExemplo()" class="btn btn-primary">Adicionar Produto Exemplo</button>
                 <div id="admin-produtos" class="produtos-list"></div>
             </div>
         </div>
@@ -55,20 +55,21 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 LojaSUA - Área Administrativa</p>
+            <p>&copy; 2025 LojaSUA - Área Administrativa</p>
         </div>
     </footer>
 
     <script src="script.js"></script>
     <script>
-        if (!isAdmin()) {
-            alert('Acesso negado! Apenas administradores podem acessar esta área.');
-            window.location.href = 'index.html';
-        }
-        
-        carregarUsuariosAdmin();
-        carregarProdutosAdmin();
-        atualizarInterfaceUsuario();
+        (async () => {
+            // Verificar se é admin
+            const usuario = await verificarSessao();
+            if (!usuario || !usuario.isAdmin) {
+                alert('Acesso negado! Apenas administradores podem acessar esta área.');
+                window.location.href = 'index.html';
+            }
+            atualizarInterfaceUsuario();
+        })();
     </script>
 </body>
 </html>
