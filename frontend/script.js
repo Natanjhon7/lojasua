@@ -1,3 +1,5 @@
+// ==================== CONFIGURAÇÃO ====================
+// 🔥 MUDE AQUI PARA SUA URL DO RENDER! 🔥
 const API_URL = 'https://lojasua-api.onrender.com/api';
 
 // ==================== FUNÇÕES DE SESSÃO ====================
