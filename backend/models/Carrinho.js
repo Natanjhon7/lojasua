@@ -6,7 +6,7 @@ const CarrinhoItemSchema = new mongoose.Schema({
 });
 
 const CarrinhoSchema = new mongoose.Schema({
-    usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+    usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true, unique: true },
     itens: [CarrinhoItemSchema],
     atualizadoEm: { type: Date, default: Date.now }
 });

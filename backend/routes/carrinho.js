@@ -2,7 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Carrinho = require('../models/Carrinho');
 const Produto = require('../models/Produto');
-const { estaLogado } = require('../middleware/auth');
+
+// Middleware para verificar se usuário está logado
+async function estaLogado(req, res, next) {
+    if (!req.session.userId) {
+        return res.status(401).json({ success: false, message: 'Não autorizado. Faça login.' });
+    }
+    next();
+}
 
 // Obter carrinho do usuário
 async function getCarrinho(usuarioId) {

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const UsuarioSchema = new mongoose.Schema({
     nome: { type: String, required: true },
-    cpf: { type: String, unique: true },
+    cpf: { type: String, unique: true, sparse: true },
     email: { type: String, required: true, unique: true },
     telefone: { type: String, default: '' },
     endereco: { type: String, default: '' },

@@ -3,13 +3,23 @@ const router = express.Router();
 const Venda = require('../models/Venda');
 const Usuario = require('../models/Usuario');
 const Produto = require('../models/Produto');
-const { isAdmin } = require('../middleware/auth');
 
-// Todos os endpoints admin exigem isAdmin
-router.use(isAdmin);
+// Middleware para verificar se é admin
+async function isAdmin(req, res, next) {
+    if (!req.session.userId) {
+        return res.status(401).json({ success: false, message: 'Não autorizado' });
+    }
+    
+    const usuario = await Usuario.findById(req.session.userId);
+    if (!usuario || !usuario.isAdmin) {
+        return res.status(403).json({ success: false, message: 'Acesso negado. Apenas administradores.' });
+    }
+    
+    next();
+}
 
 // GET - Relatório de vendas
-router.get('/relatorio-vendas', async (req, res) => {
+router.get('/relatorio-vendas', isAdmin, async (req, res) => {
     try {
         const vendas = await Venda.find().sort({ dataVenda: -1 });
         const totalGeral = vendas.reduce((sum, v) => sum + v.total, 0);
@@ -21,7 +31,7 @@ router.get('/relatorio-vendas', async (req, res) => {
 });
 
 // GET - Listar usuários
-router.get('/usuarios', async (req, res) => {
+router.get('/usuarios', isAdmin, async (req, res) => {
     try {
         const usuarios = await Usuario.find().select('-senha');
         res.json({ success: true, usuarios });
@@ -31,7 +41,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // GET - Listar produtos
-router.get('/produtos', async (req, res) => {
+router.get('/produtos', isAdmin, async (req, res) => {
     try {
         const produtos = await Produto.find();
         res.json({ success: true, produtos });
@@ -41,7 +51,7 @@ router.get('/produtos', async (req, res) => {
 });
 
 // POST - Adicionar produto
-router.post('/produtos', async (req, res) => {
+router.post('/produtos', isAdmin, async (req, res) => {
     try {
         const { nome, preco, categoria, imagem, descricao } = req.body;
         
@@ -61,7 +71,7 @@ router.post('/produtos', async (req, res) => {
 });
 
 // DELETE - Remover produto
-router.delete('/produtos/:id', async (req, res) => {
+router.delete('/produtos/:id', isAdmin, async (req, res) => {
     try {
         await Produto.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Produto removido!' });

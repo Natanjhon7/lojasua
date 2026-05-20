@@ -4,7 +4,14 @@ const Venda = require('../models/Venda');
 const Carrinho = require('../models/Carrinho');
 const Produto = require('../models/Produto');
 const Usuario = require('../models/Usuario');
-const { estaLogado } = require('../middleware/auth');
+
+// Middleware para verificar se usuário está logado
+async function estaLogado(req, res, next) {
+    if (!req.session.userId) {
+        return res.status(401).json({ success: false, message: 'Não autorizado. Faça login.' });
+    }
+    next();
+}
 
 // POST - Finalizar compra
 router.post('/finalizar', estaLogado, async (req, res) => {

@@ -1,4 +1,4 @@
-
+// Middleware para verificar se usuário está logado
 function estaLogado(req, res, next) {
     if (!req.session.userId) {
         return res.status(401).json({ success: false, message: 'Não autorizado. Faça login.' });
@@ -6,6 +6,7 @@ function estaLogado(req, res, next) {
     next();
 }
 
+// Middleware para verificar se é admin
 async function isAdmin(req, res, next) {
     if (!req.session.userId) {
         return res.status(401).json({ success: false, message: 'Não autorizado' });

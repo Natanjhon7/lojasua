@@ -5,21 +5,24 @@ const Usuario = require('../models/Usuario');
 
 // Admin fixo - verificar e criar se não existir
 async function garantirAdminFixo() {
-    const admin = await Usuario.findOne({ email: 'admin@lojasua.com' });
-    if (!admin) {
-        const senhaHash = await bcrypt.hash('admin123', 10);
-        const adminFixo = new Usuario({
-            nome: 'Administrador',
-            email: 'admin@lojasua.com',
-            cpf: '000.000.000-00',
-            senha: senhaHash,
-            isAdmin: true
-        });
-        await adminFixo.save();
-        console.log('✅ Admin fixo criado!');
+    try {
+        const admin = await Usuario.findOne({ email: 'admin@lojasua.com' });
+        if (!admin) {
+            const senhaHash = await bcrypt.hash('admin123', 10);
+            const adminFixo = new Usuario({
+                nome: 'Administrador',
+                email: 'admin@lojasua.com',
+                cpf: '000.000.000-00',
+                senha: senhaHash,
+                isAdmin: true
+            });
+            await adminFixo.save();
+            console.log('✅ Admin fixo criado!');
+        }
+    } catch (error) {
+        console.log('Erro ao criar admin:', error.message);
     }
 }
-garantirAdminFixo();
 
 // POST - Cadastro de usuário
 router.post('/cadastrar', async (req, res) => {
@@ -57,6 +60,9 @@ router.post('/cadastrar', async (req, res) => {
         
         // Fazer login automático
         req.session.userId = novoUsuario._id;
+        req.session.save((err) => {
+            if (err) console.error('Erro ao salvar sessão:', err);
+        });
         
         res.json({ 
             success: true, 
@@ -73,6 +79,9 @@ router.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
         
+        // Garantir que admin existe
+        await garantirAdminFixo();
+        
         const usuario = await Usuario.findOne({ email });
         if (!usuario) {
             return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos!' });
@@ -84,6 +93,9 @@ router.post('/login', async (req, res) => {
         }
         
         req.session.userId = usuario._id;
+        req.session.save((err) => {
+            if (err) console.error('Erro ao salvar sessão:', err);
+        });
         
         res.json({ 
             success: true, 
@@ -103,6 +115,11 @@ router.get('/sessao', async (req, res) => {
         }
         
         const usuario = await Usuario.findById(req.session.userId).select('-senha');
+        if (!usuario) {
+            req.session.destroy();
+            return res.json({ success: false, usuario: null });
+        }
+        
         res.json({ success: true, usuario });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -111,8 +128,10 @@ router.get('/sessao', async (req, res) => {
 
 // POST - Logout
 router.post('/logout', (req, res) => {
-    req.session.destroy();
-    res.json({ success: true, message: 'Logout realizado!' });
+    req.session.destroy((err) => {
+        if (err) console.error('Erro ao destruir sessão:', err);
+        res.json({ success: true, message: 'Logout realizado!' });
+    });
 });
 
 // GET - Dados do perfil

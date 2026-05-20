@@ -2,43 +2,34 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 require('dotenv').config();
 
 const app = express();
 
-// ==================== CONFIGURAÇÃO CORS CORRIGIDA ====================
-// Permitir apenas as origens que você precisa
-const allowedOrigins = [
-    'https://lojasua.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5500'
-];
-
+// ==================== CONFIGURAÇÃO CORS ====================
 app.use(cors({
-    origin: function(origin, callback) {
-        // Permitir requisições sem origin (como mobile apps ou curl)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'A política CORS não permite acesso desta origem.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
+    origin: ['https://lojasua.vercel.app', 'http://localhost:3000', 'http://localhost:5500'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie']
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== CONFIGURAÇÃO DE SESSÃO ====================
+// ==================== CONFIGURAÇÃO DE SESSÃO COM PERSISTÊNCIA NO MONGODB ====================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'lojasua_secret_key_2025',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 24 * 60 * 60, // 24 horas
+        touchAfter: 3600 // Atualiza apenas 1x por hora
+    }),
     cookie: {
-        secure: false,  // IMPORTANTE: false para HTTP (Render usa HTTP internamente)
+        secure: false,  // false para HTTP
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24, // 24 horas
         sameSite: 'lax'
@@ -98,5 +89,5 @@ mongoose.connect(process.env.MONGODB_URI)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`📍 API disponível em: https://lojasua-api.onrender.com`);
+    console.log(`📍 API disponível em: ${process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`}`);
 });
